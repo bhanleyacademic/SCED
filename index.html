@@ -1,10 +1,59 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
+    <meta charset="UTF-8">
+    <title>Title</title>
 </head>
 <body>
-$END$
+<h3>Employee List</h3>
+    <input type="text" id="filterInput" placeholder="Filter by name, job, or email" onkeyup="filterEmployees()">
+<div class="employee-list" id="employeeList"></div>
+<script>
+  let employees = [];
+
+       window.onload = function() {
+           openFile();
+       };
+
+              async function openFile() {
+           try {
+               const response = await fetch('employees.json');
+               if (!response.ok) {
+                   throw new Error('Network response was not ok');
+               }
+               const text = await response.text();
+               employees = JSON.parse(text);
+               displayEmployees();
+           } catch (error) {
+               console.error('Error opening file:', error);
+           }
+       }
+
+       function displayEmployees(filter = "") {
+           const employeeList = document.getElementById("employeeList");
+           employeeList.innerHTML = "";
+           employees
+               .filter(employee =>
+                   employee.name.toLowerCase().includes(filter) ||
+                   employee.job.toLowerCase().includes(filter) ||
+                   employee.email.toLowerCase().includes(filter)
+               )
+               .forEach((employee, index) => {
+                   const div = document.createElement("div");
+                   div.classList.add("employee-item");
+                   div.innerHTML = `
+                       <img src="images/${employee.picture}" alt="Employee Picture">
+                       <span>${employee.name} - ${employee.job} - ${employee.email}</span><br>
+                       <span>${employee.bio}</span>
+                       <button class="delete-btn" onclick="deleteEmployee(${index})">Delete</button>
+                   `;
+                   employeeList.appendChild(div);
+               });
+       }
+       function filterEmployees() {
+           const filterInput = document.getElementById("filterInput").value.toLowerCase();
+           displayEmployees(filterInput);
+       }
+</script>
 </body>
 </html>

@@ -17,8 +17,8 @@
 
     <h2>Employee Directory & Image Upload</h2>
 
-    <button onclick="openFile()">Open JSON</button>
-    <button onclick="saveFile()">Save JSON</button>
+    <button onclick="openFile()">Open Employee File</button>
+    <button onclick="saveFile()">Save Employee File</button>
 
     <form id="employeeForm">
         <input type="text" id="name" placeholder="Employee Name" required>
@@ -33,109 +33,101 @@
     <input type="text" id="filterInput" placeholder="Filter by name, job, or email" onkeyup="filterEmployees()">
     <div class="employee-list" id="employeeList"></div>
 
-    <script>
-        let employees = [];
-        let fileHandle = null;
-        let imageFolderHandle = null;
+   <script>
+       let employees = [];
+       let imageFolderHandle = null;
 
-        document.getElementById("employeeForm").addEventListener("submit", function(event) {
-            event.preventDefault();
-            addEmployee();
-        });
+       window.onload = function() {
+           openFile();
+       };
 
-        async function openFile() {
-            try {
-                [fileHandle] = await window.showOpenFilePicker({
-                    types: [{ description: "JSON Files", accept: { "application/json": [".json"] } }]
-                });
-                const file = await fileHandle.getFile();
-                const text = await file.text();
-                employees = JSON.parse(text);
-                displayEmployees();
-            } catch (error) {
-                console.error("Error opening file:", error);
-            }
-        }
+       document.getElementById("employeeForm").addEventListener("submit", function(event) {
+           event.preventDefault();
+           addEmployee();
+       });
 
-function displayEmployees(filter = "") {
-    const employeeList = document.getElementById("employeeList");
-    employeeList.innerHTML = "";
-    employees
-        .filter(employee =>
-            employee.name.toLowerCase().includes(filter) ||
-            employee.job.toLowerCase().includes(filter) ||
-            employee.email.toLowerCase().includes(filter)
-        )
-        .forEach((employee, index) => {
-            const div = document.createElement("div");
-            div.classList.add("employee-item");
-            div.innerHTML = `
-                <img src="${employee.picture}" alt="Employee Picture">
-                <span>${employee.name} - ${employee.job} - ${employee.email}</span><br>
-                <span>${employee.bio}</span>
-                <button class="delete-btn" onclick="deleteEmployee(${index})">Delete</button>
-            `;
-            employeeList.appendChild(div);
-        });
-}
+       async function openFile() {
+           try {
+               const response = await fetch('../employees.json');
+               if (!response.ok) {
+                   throw new Error('Network response was not ok');
+               }
+               const text = await response.text();
+               employees = JSON.parse(text);
+               displayEmployees();
+           } catch (error) {
+               console.error('Error opening file:', error);
+           }
+       }
 
-        async function addEmployee() {
-            const name = document.getElementById("name").value.trim();
-            const job = document.getElementById("job").value.trim();
-            const email = document.getElementById("email").value.trim();
-            const pictureInput = document.getElementById("pictureInput").files[0];
-            const bio = document.getElementById("bio").value.trim();
+       function displayEmployees(filter = "") {
+           const employeeList = document.getElementById("employeeList");
+           employeeList.innerHTML = "";
+           employees
+               .filter(employee =>
+                   employee.name.toLowerCase().includes(filter) ||
+                   employee.job.toLowerCase().includes(filter) ||
+                   employee.email.toLowerCase().includes(filter)
+               )
+               .forEach((employee, index) => {
+                   const div = document.createElement("div");
+                   div.classList.add("employee-item");
+                   div.innerHTML = `
+                       <img src="../images/${employee.picture}" alt="Employee Picture">
+                       <span>${employee.name} - ${employee.job} - ${employee.email}</span><br>
+                       <span>${employee.bio}</span>
+                       <button class="delete-btn" onclick="deleteEmployee(${index})">Delete</button>
+                   `;
+                   employeeList.appendChild(div);
+               });
+       }
 
-            if (name === "" || job === "" || email === "" || bio === "" || !pictureInput) {
-                alert("All fields and an image are required.");
-                return;
-            }
+       async function addEmployee() {
+           const name = document.getElementById("name").value.trim();
+           const job = document.getElementById("job").value.trim();
+           const email = document.getElementById("email").value.trim();
+           const pictureInput = document.getElementById("pictureInput").files[0];
+           const bio = document.getElementById("bio").value.trim();
 
-            try {
-                if (!imageFolderHandle) {
-                    imageFolderHandle = await window.showDirectoryPicker();
-                }
+           if (name === "" || job === "" || email === "" || bio === "" || !pictureInput) {
+               alert("All fields and an image are required.");
+               return;
+           }
 
-                const newFileHandle = await imageFolderHandle.getFileHandle(pictureInput.name, { create: true });
-                const writable = await newFileHandle.createWritable();
-                await writable.write(pictureInput);
-                await writable.close();
+           try {
+               if (!imageFolderHandle) {
+                   imageFolderHandle = await window.showDirectoryPicker();
+               }
 
-                const picturePath = `./${pictureInput.name}`;
+               const newFileHandle = await imageFolderHandle.getFileHandle(pictureInput.name, { create: true });
+               const writable = await newFileHandle.createWritable();
+               await writable.write(pictureInput);
+               await writable.close();
 
-                employees.push({ name, job, email, bio, picture: picturePath });
-                displayEmployees();
-                document.getElementById("employeeForm").reset();
-            } catch (error) {
-                console.error("Error saving image:", error);
-            }
-        }
+               const picturePath = `./${pictureInput.name}`;
 
-        function deleteEmployee(index) {
-            employees.splice(index, 1);
-            displayEmployees();
-        }
+               employees.push({ name, job, email, bio, picture: picturePath });
+               displayEmployees();
+               document.getElementById("employeeForm").reset();
+           } catch (error) {
+               console.error("Error saving image:", error);
+           }
+       }
 
-        async function saveFile() {
-            if (!fileHandle) {
-                alert("Please open a JSON file first.");
-                return;
-            }
+       function deleteEmployee(index) {
+           employees.splice(index, 1);
+           displayEmployees();
+       }
 
-            try {
-                const writable = await fileHandle.createWritable();
-                await writable.write(JSON.stringify(employees, null, 2));
-                await writable.close();
-                alert("JSON saved successfully!");
-            } catch (error) {
-                console.error("Error saving JSON:", error);
-            }
-        }
-        function filterEmployees() {
-            const filterInput = document.getElementById("filterInput").value.toLowerCase();
-            displayEmployees(filterInput);
-        }
-    </script>
+       async function saveFile() {
+           alert("Please open a JSON file first.");
+       }
+
+       function filterEmployees() {
+           const filterInput = document.getElementById("filterInput").value.toLowerCase();
+           displayEmployees(filterInput);
+       }
+   </script>
 
 </body>
 </html>
