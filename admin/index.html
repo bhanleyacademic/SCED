@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Directory & Image Upload</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 20px auto; }
+        input, button, textarea { margin: 5px 0; display: block; width: 100%; padding: 10px; }
+        .employee-list { margin-top: 20px; }
+        .employee-item { display: flex; justify-content: space-between; background: #f3f3f3; padding: 10px; margin-top: 5px; align-items: center; }
+        .delete-btn { background: red; color: white; border: none; cursor: pointer; padding: 5px 10px; }
+        img { width: 50px; height: 50px; object-fit: cover; border-radius: 5px; margin-right: 10px; }
+    </style>
+</head>
+<body>
+
+    <h2>Employee Directory & Image Upload</h2>
+
+    <button onclick="openFile()">Open JSON</button>
+    <button onclick="saveFile()">Save JSON</button>
+
+    <form id="employeeForm">
+        <input type="text" id="name" placeholder="Employee Name" required>
+        <input type="text" id="job" placeholder="Job Title" required>
+        <input type="email" id="email" placeholder="Email Address" required>
+        <label for="pictureInput">Employee Image:</label><input type="file" id="pictureInput" accept="image/*">
+        <textarea id="bio" placeholder="Employee Bio" required></textarea>
+        <button type="submit">Add Employee</button>
+    </form>
+
+    <h3>Employee List</h3>
+    <input type="text" id="filterInput" placeholder="Filter by name, job, or email" onkeyup="filterEmployees()">
+    <div class="employee-list" id="employeeList"></div>
+
+    <script>
+        let employees = [];
+        let fileHandle = null;
+        let imageFolderHandle = null;
+
+        document.getElementById("employeeForm").addEventListener("submit", function(event) {
+            event.preventDefault();
+            addEmployee();
+        });
+
+        async function openFile() {
+            try {
+                [fileHandle] = await window.showOpenFilePicker({
+                    types: [{ description: "JSON Files", accept: { "application/json": [".json"] } }]
+                });
+                const file = await fileHandle.getFile();
+                const text = await file.text();
+                employees = JSON.parse(text);
+                displayEmployees();
+            } catch (error) {
+                console.error("Error opening file:", error);
+            }
+        }
+
+function displayEmployees(filter = "") {
+    const employeeList = document.getElementById("employeeList");
+    employeeList.innerHTML = "";
+    employees
+        .filter(employee =>
+            employee.name.toLowerCase().includes(filter) ||
+            employee.job.toLowerCase().includes(filter) ||
+            employee.email.toLowerCase().includes(filter)
+        )
+        .forEach((employee, index) => {
+            const div = document.createElement("div");
+            div.classList.add("employee-item");
+            div.innerHTML = `
+                <img src="${employee.picture}" alt="Employee Picture">
+                <span>${employee.name} - ${employee.job} - ${employee.email}</span><br>
+                <span>${employee.bio}</span>
+                <button class="delete-btn" onclick="deleteEmployee(${index})">Delete</button>
+            `;
+            employeeList.appendChild(div);
+        });
+}
+
+        async function addEmployee() {
+            const name = document.getElementById("name").value.trim();
+            const job = document.getElementById("job").value.trim();
+            const email = document.getElementById("email").value.trim();
+            const pictureInput = document.getElementById("pictureInput").files[0];
+            const bio = document.getElementById("bio").value.trim();
+
+            if (name === "" || job === "" || email === "" || bio === "" || !pictureInput) {
+                alert("All fields and an image are required.");
+                return;
+            }
+
+            try {
+                if (!imageFolderHandle) {
+                    imageFolderHandle = await window.showDirectoryPicker();
+                }
+
+                const newFileHandle = await imageFolderHandle.getFileHandle(pictureInput.name, { create: true });
+                const writable = await newFileHandle.createWritable();
+                await writable.write(pictureInput);
+                await writable.close();
+
+                const picturePath = `./${pictureInput.name}`;
+
+                employees.push({ name, job, email, bio, picture: picturePath });
+                displayEmployees();
+                document.getElementById("employeeForm").reset();
+            } catch (error) {
+                console.error("Error saving image:", error);
+            }
+        }
+
+        function deleteEmployee(index) {
+            employees.splice(index, 1);
+            displayEmployees();
+        }
+
+        async function saveFile() {
+            if (!fileHandle) {
+                alert("Please open a JSON file first.");
+                return;
+            }
+
+            try {
+                const writable = await fileHandle.createWritable();
+                await writable.write(JSON.stringify(employees, null, 2));
+                await writable.close();
+                alert("JSON saved successfully!");
+            } catch (error) {
+                console.error("Error saving JSON:", error);
+            }
+        }
+        function filterEmployees() {
+            const filterInput = document.getElementById("filterInput").value.toLowerCase();
+            displayEmployees(filterInput);
+        }
+    </script>
+
+</body>
+</html>
