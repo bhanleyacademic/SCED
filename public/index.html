@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Employee Directory</title>
+</head>
+<body>
+  <h1>Employee Directory</h1>
+
+  <!-- Filter/Sort UI (already there) -->
+  <div>
+    <input type="text" id="searchInput" placeholder="Search by name...">
+    <select id="sortSelect">
+      <option value="">Sort by...</option>
+      <option value="firstName">First Name</option>
+      <option value="lastName">Last Name</option>
+      <option value="department">Department</option>
+    </select>
+    <button id="searchBtn">Filter/Sort</button>
+  </div>
+
+  <!-- List of employees -->
+  <ul id="employeeList"></ul>
+
+  <hr />
+
+<!-- Simple Login Form (for Admin) -->
+  <div id="loginSection">
+    <h2>Admin Login</h2>
+    <input type="text" id="loginUsername" placeholder="Username"><br><br>
+    <input type="password" id="loginPassword" placeholder="Password"><br><br>
+    <button id="loginBtn">Login</button>
+  </div>
+
+  <!-- Simple Admin Actions (Add Employee) -->
+  <div id="adminSection" style="display:none;">
+    <h2>Admin Actions</h2>
+    <input type="text" id="firstNameInput" placeholder="First Name">
+    <input type="text" id="lastNameInput" placeholder="Last Name">
+    <input type="text" id="deptInput" placeholder="Department">
+    <input type="text" id="roleInput" placeholder="Role">
+    <input type="file" id="photoInput" accept="image/*">
+    <button id="addEmployeeBtn">Add Employee</button>
+    <button id="logoutBtn">Logout</button>
+  </div>
+
+  <script src="main.js"></script>
+</body>
+</html>
